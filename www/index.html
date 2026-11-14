@@ -6,6 +6,14 @@
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#1f2937">
   <title>คำนวณท่อไอเสีย</title>
+  <!-- เว็บแอป: iPhone → Safari → แชร์ → "เพิ่มไปยังหน้าจอโฮม" / Android Chrome → "ติดตั้งแอป" -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ท่อไอเสีย">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -89,5 +97,13 @@
 
   <script src="js/calc.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // ลง service worker เฉพาะตอนเปิดผ่านเว็บ (https/localhost) — ในแอป APK (Capacitor) ไฟล์อยู่ในเครื่องอยู่แล้ว ไม่ต้องใช้
+    if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () { /* โหมดส่วนตัว/ไม่รองรับ → ใช้งานออนไลน์ปกติ */ });
+      });
+    }
+  </script>
 </body>
 </html>

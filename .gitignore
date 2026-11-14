@@ -6,3 +6,4 @@ ios/
 *.jks
 .DS_Store
 Thumbs.db
+apk/

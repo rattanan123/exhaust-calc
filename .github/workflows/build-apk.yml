@@ -27,7 +27,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
+          # ไม่ใช้ cache: gradle เพราะโฟลเดอร์ android/ ยังไม่มีตอนนี้ (สร้างทีหลังด้วย cap add) → setup-java หาไฟล์ gradle ไม่เจอแล้ว fail
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund

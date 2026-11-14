@@ -3,7 +3,7 @@
  * (stale-while-revalidate) — แก้โค้ดแล้ว push ผู้ใช้จะได้ของใหม่ในการเปิดครั้งถัดไป ไม่ต้องเปลี่ยน VERSION
  * เปลี่ยน VERSION เมื่อเพิ่ม/ลบไฟล์ใน ASSETS เท่านั้น (แคชเก่าจะถูกลบ)
  */
-const VERSION = 'v1';
+const VERSION = 'v2'; // v2: ดีไซน์ใหม่ + ฟอนต์ IBM Plex Sans Thai
 const CACHE = 'exhaust-calc-' + VERSION;
 const ASSETS = [
   './',
@@ -16,6 +16,15 @@ const ASSETS = [
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
   './icons/favicon-32.png',
+  './fonts/fonts.css',
+  './fonts/plex-sans-thai-thai-400.woff2',
+  './fonts/plex-sans-thai-thai-500.woff2',
+  './fonts/plex-sans-thai-thai-600.woff2',
+  './fonts/plex-sans-thai-thai-700.woff2',
+  './fonts/plex-sans-thai-latin-400.woff2',
+  './fonts/plex-sans-thai-latin-500.woff2',
+  './fonts/plex-sans-thai-latin-600.woff2',
+  './fonts/plex-sans-thai-latin-700.woff2',
 ];
 
 self.addEventListener('install', (e) => {

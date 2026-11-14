@@ -83,34 +83,42 @@
 
   let lastResult = null;
 
-  function stdText(std) {
-    if (!std) return '-';
-    const sign = std.diffMm > 0 ? '+' : '';
-    return `OD ${std.odMm} มม. (ID ${std.idMm}, ${sign}${std.diffMm})`;
+  const ICON_SAVE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>';
+  const ICON_DEL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>';
+
+  // กล่อง "ท่อสำเร็จรูปใกล้สุด": OD ตัวใหญ่ + ID/ส่วนต่าง บรรทัดล่าง
+  function stdStat(std) {
+    if (!std) return '<div class="v">-</div>';
+    const d = std.diffMm;
+    const diff = d === 0 ? 'พอดี' : `${d > 0 ? 'ใหญ่กว่า' : 'เล็กกว่า'} ${Math.abs(d)} มม.`;
+    return `<div class="v">OD ${std.odMm}</div><div class="u">ID ${std.idMm} · ${diff}</div>`;
   }
 
   function renderResult(r) {
     const box = $('header-result');
     const multi = r.input.cylinders > 1;
     box.innerHTML = `
-      <h2>ผลคำนวณ <span class="hint" style="margin:0">${r.input.cc} cc · ${r.input.cylinders} สูบ · จูน ${r.input.rpm} rpm</span></h2>
-      <div class="stats">
-        <div class="stat hl"><div class="k">ความยาวคอท่อ</div><div class="v">${r.primary.lengthMm}</div><div class="u">มม. (${r.primary.lengthIn} นิ้ว)</div></div>
-        <div class="stat hl"><div class="k">เส้นผ่านศูนย์กลางใน (ID)</div><div class="v">${r.primary.idMm}</div><div class="u">มม. (${r.primary.idIn} นิ้ว)</div></div>
-        <div class="stat"><div class="k">OD ที่ต้องใช้ (ผนัง ${r.input.wall})</div><div class="v">${r.primary.odMm}</div><div class="u">มม.</div></div>
-        <div class="stat"><div class="k">ท่อสำเร็จรูปที่ใกล้สุด</div><div class="v" style="font-size:1rem">${stdText(r.primary.std)}</div></div>
+      <div class="result-head">
+        <h2>ผลคำนวณ</h2>
+        <p class="hint num">${r.input.cc} cc · ${r.input.cylinders} สูบ · จูน ${r.input.rpm} rpm</p>
       </div>
-      <h3>${multi ? `ท่อรวม (collector ${r.input.cylinders} เข้า 1)` : 'ท่อหลัก/ท่อต่อไปหม้อพัก'}</h3>
       <div class="stats">
-        <div class="stat"><div class="k">ID</div><div class="v">${r.collector.idMm}</div><div class="u">มม. (${r.collector.idIn} นิ้ว)</div></div>
-        <div class="stat"><div class="k">ท่อสำเร็จรูปที่ใกล้สุด</div><div class="v" style="font-size:1rem">${stdText(r.collector.std)}</div></div>
+        <div class="stat hl"><div class="k">ความยาวคอท่อ</div><div class="v">${r.primary.lengthMm}</div><div class="u">มม. · ${r.primary.lengthIn} นิ้ว</div></div>
+        <div class="stat hl"><div class="k">ขนาดใน (ID)</div><div class="v">${r.primary.idMm}</div><div class="u">มม. · ${r.primary.idIn} นิ้ว</div></div>
+        <div class="stat"><div class="k">ขนาดนอก (OD)</div><div class="v">${r.primary.odMm}</div><div class="u">มม. · ผนัง ${r.input.wall}</div></div>
+        <div class="stat"><div class="k">ท่อสำเร็จรูปใกล้สุด</div>${stdStat(r.primary.std)}</div>
+      </div>
+      <h3>${multi ? `ท่อรวม (collector ${r.input.cylinders} เข้า 1)` : 'ท่อหลัก / ต่อไปหม้อพัก'}</h3>
+      <div class="stats">
+        <div class="stat"><div class="k">ขนาดใน (ID)</div><div class="v">${r.collector.idMm}</div><div class="u">มม. · ${r.collector.idIn} นิ้ว</div></div>
+        <div class="stat"><div class="k">ท่อสำเร็จรูปใกล้สุด</div>${stdStat(r.collector.std)}</div>
       </div>
       ${multi ? '' : '<p class="hint">สูบเดียว: ท่อหลักใช้ขนาดเท่าคอท่อ หรือโตขึ้น 1 ขั้น (2–3 มม.) หลังจุดต่อ</p>'}
-      ${r.warnings.map((w) => `<div class="warn">⚠️ ${esc(w)}</div>`).join('')}
+      ${r.warnings.map((w) => `<div class="warn">${esc(w)}</div>`).join('')}
       <p class="formula">สูตร: ED = 180 + ${r.input.evo} = ${r.ed}° · ความยาว = 850×ED/รอบ − 3 · ID = √(cc ต่อสูบ ÷ ((ยาว+3)×25)) × 2.1 — เป็นค่าเริ่มต้นสำหรับลองจูน ควรทดสอบจริงบนแท่น/ถนน</p>
-      <div class="grid2" style="margin-top:12px;align-items:end">
-        <label class="field" style="grid-column:span 1"><span>ชื่อที่จะบันทึก</span><input id="save-name" maxlength="40" placeholder="เช่น เวฟของฉัน"></label>
-        <button id="save-btn" type="button" class="btn">💾 บันทึก</button>
+      <div class="save-row">
+        <label class="field"><span>ชื่อที่จะบันทึก</span><input id="save-name" maxlength="40" placeholder="เช่น เวฟของฉัน"></label>
+        <button id="save-btn" type="button" class="btn primary">${ICON_SAVE}<span>บันทึก</span></button>
       </div>`;
     box.hidden = false;
     $('save-btn').addEventListener('click', saveCurrent);
@@ -154,7 +162,7 @@
     if (store.set(HIST_KEY, list)) {
       toast('บันทึกแล้ว');
       btn.disabled = true; // กันกดซ้ำ — คำนวณใหม่ถึงจะบันทึกได้อีก
-      btn.textContent = '✓ บันทึกแล้ว';
+      btn.innerHTML = `${ICON_SAVE}<span>บันทึกแล้ว</span>`;
     } else {
       toast('บันทึกไม่ได้ (พื้นที่เก็บข้อมูลเต็ม/ถูกปิด)');
     }
@@ -167,18 +175,16 @@
     $('hist-clear').hidden = list.length === 0;
     ul.innerHTML = list.map((h) => {
       const d = new Date(h.at);
-      const when = isNaN(d) ? '' : d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+      const when = isNaN(d) ? '' : d.toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const s = h.summary || {};
+      const inp = h.input || {};
       return `<li data-id="${esc(h.id)}">
-        <div class="info">
-          <div class="name">${esc(h.name)}</div>
-          <div class="meta">${esc(h.input.cc)} cc · ${esc(h.input.cylinders)} สูบ · ${esc(h.input.rpm)} rpm → ยาว ${esc(s.lengthMm)} มม. · ID ${esc(s.idMm)} มม.</div>
-          <div class="meta">${esc(when)}</div>
-        </div>
-        <div class="acts">
-          <button class="btn small" data-act="load" type="button">เปิด</button>
-          <button class="btn small danger" data-act="del" type="button" aria-label="ลบ">🗑</button>
-        </div></li>`;
+        <button class="hist-open" data-act="load" type="button" aria-label="เปิดผล ${esc(h.name)}">
+          <span class="top"><span class="name">${esc(h.name)}</span><span class="when">${esc(when)}</span></span>
+          <span class="meta num">${esc(inp.cc)} cc · ${esc(inp.cylinders)} สูบ · ${esc(inp.rpm)} rpm</span>
+          <span class="chips"><span class="chip acc">ยาว ${esc(s.lengthMm)} มม.</span><span class="chip">ID ${esc(s.idMm)} มม.</span></span>
+        </button>
+        <button class="icon-btn" data-act="del" type="button" aria-label="ลบ ${esc(h.name)}">${ICON_DEL}</button></li>`;
     }).join('');
   }
 
@@ -226,14 +232,19 @@
     if (areaOld.value.trim() === '') { areaOut.innerHTML = ''; return; }
     const r = C.compareArea(areaOld.value, areaNew.value);
     if (!r.ok) { areaOut.innerHTML = `<div class="errors">${esc(r.msg)}</div>`; return; }
-    let html = `<div>ท่อเดิม: <b>${r.oldAreaMm2}</b> มม.² (${r.oldAreaCm2} ซม.²)</div>`;
+    // แถบเทียบ: อันที่ใหญ่กว่า = 100% (ไม่มีท่อใหม่ = แถบเดิมเต็ม)
+    const max = Math.max(r.oldAreaMm2, r.newAreaMm2 || 0) || 1;
+    const bar = (label, mm2, cm2, cls) => `<div class="area-row">
+        <div class="lbl"><span>${label}</span><b>${mm2} มม.² <small style="font-weight:400;color:var(--muted)">(${cm2} ซม.²)</small></b></div>
+        <div class="track"><i class="${cls}" style="width:${Math.max(2, (mm2 / max) * 100).toFixed(1)}%"></i></div></div>`;
+    let html = '<div class="area-box">' + bar('ท่อเดิม', r.oldAreaMm2, r.oldAreaCm2, '');
     if (r.newAreaMm2 != null) {
-      const cls = r.changePct >= 0 ? 'up' : 'down';
       const sign = r.changePct > 0 ? '+' : '';
-      html += `<div>ท่อใหม่: <b>${r.newAreaMm2}</b> มม.² (${r.newAreaCm2} ซม.²)</div>
-               <div class="big ${cls}">${sign}${r.changePct}%</div>`;
-      if (r.changePct > 30) html += '<div class="warn">พื้นที่โตขึ้นเกิน 30% — รอบต่ำอาจหายได้</div>';
+      html += bar('ท่อใหม่', r.newAreaMm2, r.newAreaCm2, 'new') +
+        `<div class="area-sum"><span>พื้นที่เปลี่ยนไป</span><span class="chip big ${r.changePct >= 0 ? 'acc' : 'down'}">${sign}${r.changePct}%</span></div>`;
     }
+    html += '</div>';
+    if (r.newAreaMm2 != null && r.changePct > 30) html += '<div class="warn">พื้นที่โตขึ้นเกิน 30% — รอบต่ำอาจหายได้</div>';
     areaOut.innerHTML = html;
   }
   areaOld.addEventListener('input', onArea);

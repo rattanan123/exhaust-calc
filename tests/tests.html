@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ทดสอบสูตร calc.js</title>
+  <style>
+    body { font: 14px/1.5 system-ui, Tahoma, sans-serif; margin: 16px; background: #fff; color: #111; }
+    .pass { color: #059669; } .fail { color: #dc2626; font-weight: 700; }
+    #sum { font-size: 1.2rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>ทดสอบ calc.js</h1>
+  <div id="sum"></div>
+  <ol id="out"></ol>
+  <script src="../www/js/calc.js"></script>
+  <script>
+    const C = window.ExhaustCalc;
+    const results = [];
+    function t(name, fn) {
+      try { const ok = fn(); results.push({ name, ok: ok === true, info: ok === true ? '' : String(ok) }); }
+      catch (e) { results.push({ name, ok: false, info: e.message }); }
+    }
+    const near = (a, b, tol) => Math.abs(a - b) <= tol || `ได้ ${a} คาด ${b}±${tol}`;
+    const base = { cc: 125, cylinders: 1, rpm: 8000, evo: 50, wall: 1.2 };
+
+    // กรณีปกติ — คำนวณมือ: ED=230, P=850*230/8000-3=21.4375in, ID=√(125/(24.4375*25))*2.1=0.9499in
+    t('ปกติ 125cc 1 สูบ: ความยาว', () => near(C.calcHeader(base).primary.lengthIn, 21.4, 0.05));
+    t('ปกติ 125cc 1 สูบ: ID มม.', () => near(C.calcHeader(base).primary.idMm, 24.1, 0.1));
+    t('สูบเดียว: collector = คอท่อ', () => { const r = C.calcHeader(base); return r.collector.idMm === r.primary.idMm || 'ไม่เท่ากัน'; });
+    t('OD = ID + 2×ผนัง', () => { const r = C.calcHeader(base); return near(r.primary.odMm, r.primary.idMm + 2.4, 0.11); });
+    t('รับค่าเป็น string/มีคอมม่า', () => C.calcHeader({ ...base, cc: ' 1,000 ', cylinders: '4', rpm: '12,000' }).ok === true);
+    t('รอบสูงขึ้น → คอท่อสั้นลง', () => C.calcHeader({ ...base, rpm: 10000 }).primary.lengthMm < C.calcHeader(base).primary.lengthMm || 'ไม่สั้นลง');
+    t('4 สูบ: collector โตกว่าคอท่อ ~1.7 เท่า', () => { const r = C.calcHeader({ ...base, cc: 649, cylinders: 4, rpm: 11000 }); return near(r.collector.idMm / r.primary.idMm, 1.70, 0.02); });
+    t('2 สูบ: collector ~1.2 เท่า', () => { const r = C.calcHeader({ ...base, cc: 400, cylinders: 2 }); return near(r.collector.idMm / r.primary.idMm, 1.2, 0.02); });
+
+    // ค่าขอบ/ผิดปกติ
+    t('ว่าง → error', () => C.calcHeader({ ...base, cc: '' }).ok === false);
+    t('ตัวอักษร → error', () => C.calcHeader({ ...base, rpm: 'abc' }).ok === false);
+    t('ติดลบ → error', () => C.calcHeader({ ...base, cc: -125 }).ok === false);
+    t('0 สูบ → error', () => C.calcHeader({ ...base, cylinders: 0 }).ok === false);
+    t('1.5 สูบ → error', () => C.calcHeader({ ...base, cylinders: 1.5 }).ok === false);
+    t('รอบ 999999 → error', () => C.calcHeader({ ...base, rpm: 999999 }).ok === false);
+    t('Infinity → error', () => C.calcHeader({ ...base, cc: Infinity }).ok === false);
+    t('null/undefined → error ไม่ crash', () => C.calcHeader({}).ok === false && C.calcHeader({}).errors.length === 5);
+    t('ขอบล่างผ่าน (49cc, 2000rpm)', () => C.calcHeader({ ...base, cc: 49, rpm: 2000 }).ok === true);
+    t('ขอบบนผ่าน (2500cc 6 สูบ 20000rpm)', () => C.calcHeader({ ...base, cc: 2500, cylinders: 6, rpm: 20000 }).ok === true);
+    t('รอบต่ำ → เตือนคอท่อยาว', () => C.calcHeader({ ...base, rpm: 2000 }).warnings.length > 0);
+    t('ผลไม่มี NaN ทุกตัวในช่วงที่ยอมรับ', () => {
+      for (const cc of [49, 125, 650, 2500]) for (const cyl of [1, 2, 4, 6]) for (const rpm of [2000, 9000, 20000]) for (const evo of [20, 90]) {
+        const r = C.calcHeader({ cc, cylinders: cyl, rpm, evo, wall: 1 });
+        const s = JSON.stringify(r);
+        if (!r.ok || s.includes('null') && !s.includes('"std":null') || [r.primary.lengthMm, r.primary.idMm, r.collector.idMm].some((x) => !Number.isFinite(x) || x <= 0)) return `พังที่ ${cc}/${cyl}/${rpm}/${evo}`;
+      }
+      return true;
+    });
+
+    // ท่อสำเร็จรูป
+    t('ท่อใกล้สุด ID 24.1 ผนัง 1.2 → OD 25.4 หรือ 28', () => [25.4, 28].includes(C.nearestStdTube(24.1, 1.2).odMm) || C.nearestStdTube(24.1, 1.2).odMm);
+
+    // แปลงหน่วย
+    t('1 นิ้ว = 25.4 มม.', () => C.convertLength(1, 'in').mm === 25.4);
+    t('50.8 มม. = 2 นิ้ว', () => C.convertLength('50.8', 'mm').in === 2);
+    t('แปลงค่าติดลบ → null', () => C.convertLength(-1, 'mm') === null);
+    t('แปลงตัวอักษร → null', () => C.convertLength('x', 'mm') === null);
+
+    // พื้นที่
+    t('25 → 28 มม. = +25.4%', () => near(C.compareArea(25, 28).changePct, 25.4, 0.05));
+    t('ไม่มีท่อใหม่ → คืนแค่ท่อเดิม', () => { const r = C.compareArea(25, ''); return r.ok && r.changePct === undefined; });
+    t('ท่อเดิม 0 → error', () => C.compareArea(0, 28).ok === false);
+    t('ท่อใหม่ผิด → error', () => C.compareArea(25, 'abc').ok === false);
+
+    const pass = results.filter((r) => r.ok).length;
+    document.getElementById('sum').innerHTML = `<span class="${pass === results.length ? 'pass' : 'fail'}">ผ่าน ${pass}/${results.length}</span>`;
+    document.getElementById('out').innerHTML = results.map((r) => `<li class="${r.ok ? 'pass' : 'fail'}">${r.ok ? '✓' : '✗'} ${r.name} ${r.info}</li>`).join('');
+    window.__testResult = { pass, total: results.length, failed: results.filter((r) => !r.ok) };
+  </script>
+</body>
+</html>

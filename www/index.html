@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1f2937">
+  <title>คำนวณท่อไอเสีย</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>คำนวณท่อไอเสีย <span class="sub">มอเตอร์ไซค์ 4 จังหวะ</span></h1>
+  </header>
+
+  <main>
+    <!-- ===== แท็บ 1: คอท่อ + ท่อหลัก ===== -->
+    <section id="tab-header" class="tab active" aria-labelledby="nav-header">
+      <form id="header-form" class="card" novalidate autocomplete="off">
+        <label class="field">
+          <span>รุ่นรถ (เติมค่าให้อัตโนมัติ)</span>
+          <select id="preset">
+            <option value="">— กรอกเอง —</option>
+          </select>
+        </label>
+        <div class="grid2">
+          <label class="field"><span>ความจุ (cc)</span>
+            <input id="cc" name="cc" inputmode="decimal" placeholder="เช่น 125" required></label>
+          <label class="field"><span>จำนวนสูบ</span>
+            <select id="cylinders" name="cylinders">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>6</option>
+            </select></label>
+          <label class="field"><span>รอบที่ต้องการจูน (rpm)</span>
+            <input id="rpm" name="rpm" inputmode="numeric" value="8000"></label>
+          <label class="field"><span>วาล์วไอเสียเปิด (° BBDC)</span>
+            <input id="evo" name="evo" inputmode="decimal" value="50"></label>
+          <label class="field"><span>ผนังท่อ (มม.)</span>
+            <input id="wall" name="wall" inputmode="decimal" value="1.2"></label>
+        </div>
+        <p class="hint">ไม่รู้องศาวาล์ว ใช้ 50° ได้ (แคมเดิมส่วนใหญ่ 40–60°) · รอบจูน = ช่วงรอบที่อยากให้แรงที่สุด</p>
+        <div id="header-errors" class="errors" role="alert" hidden></div>
+        <button type="submit" class="btn primary">คำนวณ</button>
+      </form>
+
+      <div id="header-result" class="card result" hidden aria-live="polite"></div>
+    </section>
+
+    <!-- ===== แท็บ 2: แปลงหน่วย + พื้นที่หน้าตัด ===== -->
+    <section id="tab-convert" class="tab" aria-labelledby="nav-convert" hidden>
+      <div class="card">
+        <h2>แปลงหน่วย</h2>
+        <div class="grid2">
+          <label class="field"><span>มิลลิเมตร (มม.)</span><input id="conv-mm" inputmode="decimal" placeholder="0"></label>
+          <label class="field"><span>นิ้ว (in)</span><input id="conv-in" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <p id="conv-out" class="hint"></p>
+      </div>
+      <div class="card">
+        <h2>พื้นที่หน้าตัด ท่อเดิม vs ท่อใหม่</h2>
+        <div class="grid2">
+          <label class="field"><span>ท่อเดิม ID (มม.)</span><input id="area-old" inputmode="decimal" placeholder="เช่น 25"></label>
+          <label class="field"><span>ท่อใหม่ ID (มม.)</span><input id="area-new" inputmode="decimal" placeholder="เช่น 28"></label>
+        </div>
+        <div id="area-out" class="area-out" aria-live="polite"></div>
+        <p class="hint">ID = เส้นผ่านศูนย์กลางใน = OD − (ผนัง × 2)</p>
+      </div>
+    </section>
+
+    <!-- ===== แท็บ 3: ประวัติ ===== -->
+    <section id="tab-history" class="tab" aria-labelledby="nav-history" hidden>
+      <div class="card">
+        <div class="row-between">
+          <h2>ผลที่บันทึกไว้</h2>
+          <button id="hist-clear" class="btn small danger" type="button">ลบทั้งหมด</button>
+        </div>
+        <p id="hist-empty" class="hint">ยังไม่มีผลที่บันทึก — กด "บันทึก" หลังคำนวณ</p>
+        <ul id="hist-list" class="hist"></ul>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottomnav" role="tablist">
+    <button id="nav-header" role="tab" data-tab="tab-header" aria-selected="true">⚙️<span>คอท่อ/ท่อหลัก</span></button>
+    <button id="nav-convert" role="tab" data-tab="tab-convert" aria-selected="false">📐<span>แปลงหน่วย</span></button>
+    <button id="nav-history" role="tab" data-tab="tab-history" aria-selected="false">🗂️<span>ประวัติ</span></button>
+  </nav>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="js/calc.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

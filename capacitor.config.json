@@ -1,0 +1,8 @@
+{
+  "appId": "th.exhaustcalc.app",
+  "appName": "คำนวณท่อไอเสีย",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
